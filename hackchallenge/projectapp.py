@@ -72,8 +72,37 @@ def register_user():
     db.session.commit()
     #preferences
     preferences = Preferences(
-        
+
     )
+
+@app.route('/api/users/login', methods=['POST'])
+def login_user():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    user= User.query.filter_by(email=email).first()
+    if user is None or not check_password_hash(,password):
+        return jsonify({"error": "Invalid username or password"}), 401
+    return jsonify(user.serialize()),200
+
+@app.route('/api/preferences/<int:user_id>', methods=['GET'])
+def get_preferences(user_id):
+    preferences = Preferences.query.filter_by(userId = user_id).first()
+    if preferences is None:
+        return jsonify({"error": "No preferences"}), 404
+    return jsonify(preferences.serialize()),200
+
+@app.route('/api/preferences/<int:user_id>', methods=['PUT'])
+def update_preferences(user_id):
+    preferences = Preferences.query.filter_by(userId=user_id).first()
+    if preferences is None:
+        preferences = Preferences(userId=user_id)
+        db.session.add(preferences)
+    
+    data = request.get_json()
+    preferences.dietPreferences = data.get('dietPreferences', preferences.dietPreferences)
+    preferences.allergens = data.get('allergens', preferences.allergens)
+    db.session.commit()
 
 @app.route('/api/dininghalls', methods=['GET'])
 def get_dining_halls():
@@ -85,6 +114,18 @@ def get_dining_halls():
 @app.route('/api/upload', methods=['POST'])
 def upload_photos():
     picture = request.files['picture']
+    if picture is None:
+        return jsonify({"error": "No picture"}),404
+    
+    plate = PlatePhotos(
+        menuItemId=,
+        diningHallId=,
+        photo=
+    )
+    db.session.add(plate)
+
+    db.session.commit()
+    return jsonify(plate.serialize()),201
 
 
 
