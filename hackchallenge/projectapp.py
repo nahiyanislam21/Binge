@@ -2,7 +2,7 @@
 
 import json
 import os
-from projectdb import db, DiningHall, User
+from projectdb import db, DiningHall, User, Preferences
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -71,6 +71,9 @@ def register_user():
     db.session.add(user)
     db.session.commit()
     #preferences
+    preferences = Preferences(
+        
+    )
 
 @app.route('/api/dininghalls', methods=['GET'])
 def get_dining_halls():
