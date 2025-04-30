@@ -96,7 +96,6 @@ class Menu(db.Model):
             "description": self.description,
             "photo": self.photo,
             "preferenceTags": self.preferenceTags
-            # "plates": [plate.serialize() for plate in self.plates]
         }
 
 
