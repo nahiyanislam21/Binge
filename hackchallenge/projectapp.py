@@ -127,6 +127,8 @@ def upload_photos():
     db.session.commit()
     return jsonify(plate.serialize()),201
 
+# @app.route('')
+
 
 
 if __name__ == "__main__":
