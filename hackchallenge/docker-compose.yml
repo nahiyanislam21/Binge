@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  demo:
+    image: hydra035/hack #hack
+    ports:
+      - "8000:8000"
+    env_file: .env

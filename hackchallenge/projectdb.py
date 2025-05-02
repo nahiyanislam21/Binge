@@ -15,6 +15,23 @@ from math import radians, sin, cos, sqrt, atan2
 # figure out how to do matching. (ratings can be made thru some sorting implementation)
     #Matching system (like recommending based on ratings or preferences)
 
+
+# use a file to populate
+menus_table = db.Table(
+    'menus',
+    db.Column('dining_hall',db.Integer, db.ForeignKey("dininghall.id"), primary_key=True), # dininghall
+    db.Column('menu_items', db.Integer, db.ForeignKey("menuitem.id"), primary_key=True)
+)
+    
+
+# Many to many relationship between menu and menu items
+# This table is used to link menu items to menus
+menu_menuitem = db.Table(
+    "menu_menuitem",
+    db.Column("menu_id", db.Integer, db.ForeignKey("menu.id"), primary_key=True), #menu
+    db.Column("menuitem_id", db.Integer, db.ForeignKey("menuitem.id"), primary_key=True) #menu item
+)
+
 class User(db.Model):
     """
     User model
@@ -25,8 +42,9 @@ class User(db.Model):
     username = db.Column(db.String, unique =True, nullable = False)
     name = db.Column(db.String)
     email = db.Column(db.String, unique=True, nullable = False)
-    passwordHash = db.Column(db.String, nullable = False) #shouldn't be primary_key, multiple users can have same password
-    preferences = db.relationship("Preferences", backref="user")
+    passwordHash = db.Column(db.String, nullable = False)
+
+    swipes = db.relationship("Swipe", back_populates="user")
 
     def serialize(self):
         return {
@@ -35,41 +53,87 @@ class User(db.Model):
             "name": self.name,
             "email": self.email
         }
-
-
-
-    preferences = db.relationship("Preferences", backref="user", uselist=False)
-    swipes = db.relationship("Swipe", backref="user")
     
-
-class PlatePhotos(db.Model):
+class UserSwipeTable(db.Model):
     """
-    Plate uploading model (Create/Update)
+    User swipe table model
+    Many to many relationship with user and dining hall
+    """
+    __tablename__="user_swipe_table"
+    id = db.Column(db.Integer, primary_key=True, autoincrement = True) 
+    userId = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
     
-    Users upload a photo of the plate, name of dish, last time created will be listed
-    details of the plate will be provided in database
+    SwipeNumber = db.Column(db.Integer, nullable = False)
+    menuItemId = db.Column(db.Integer, db.ForeignKey("menuitem.id"), nullable=False)
+    swipeStatus = db.Column(db.Boolean, nullable = False) #right:true left:false
 
-    Many to one relationship with dininghall and menu
-    """
-    __tablename__="plate"
-    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
-    menuItemId= db.Column(db.Integer, db.ForeignKey("menu.id"), nullable = False)
-    diningHallId= db.Column(db.Integer, db.ForeignKey("dininghall.id"), nullable = False)
-
-    timeCreated = db.Column(db.DateTime, server_default= db.func.now())
-    menu_item = db.relationship("Menu", backref = "plates") # many plates
-    dining_hall = db.relationship("DiningHall", backref = "plates") # many plates
-
-    photo = db.Column(db.String)
+    user = db.relationship("User", backref="user_swipe_table_entries")
+    menu_item = db.relationship("MenuItem", backref="user_swipes")
 
     def serialize(self):
         return {
             "id": self.id,
+            "userId": self.userId,
+            "SwipeNumber": self.SwipeNumber,
             "menuItemId": self.menuItemId,
-            "diningHallId": self.diningHallId,
-            "timeCreated": self.timeCreated.isoformat(),
-            "photo": self.photo
+            "swipeStatus": self.swipeStatus
         }
+    
+class Swipe(db.Model): 
+    """
+    User swiping model to provide the student a dining hall 
+
+    Many to one relationship, many swipes for one user
+    """
+    __tablename__="swipe"
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
+    userId = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
+    menuId= db.Column(db.Integer, db.ForeignKey("menu.id"), nullable = False)
+    swipeBoolean = db.Column(db.Boolean, nullable=False) #right:true left:false
+
+    user = db.relationship("User", back_populates="swipes")
+    menu_item = db.relationship("MenuItem", back_populates="swipes")
+    menu_item_id = db.Column(db.Integer, db.ForeignKey("menuitem.id"))
+
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "userId": self.userId,
+            "menuId": self.menuId,
+            "swipeBoolean": self.swipeBoolean
+        }
+    
+# class PlatePhotos(db.Model):
+#         """
+#         Plate uploading model (Create/Update)
+        
+#         Users upload a photo of the plate, name of dish, last time created will be listed
+#         details of the plate will be provided in database
+
+#         Many to one relationship with dininghall and menu
+#         """
+#         __tablename__="plate"
+#         id = db.Column(db.Integer, primary_key=True, autoincrement = True)
+#         menuItemId= db.Column(db.Integer, db.ForeignKey("menu.id"), nullable = False)
+#         diningHallId= db.Column(db.Integer, db.ForeignKey("dininghall.id"), nullable = False)
+
+#         timeCreated = db.Column(db.DateTime, server_default= db.func.now())
+#         menu_item = db.relationship("Menu", backref = "plates") # many plates
+#         dining_hall = db.relationship("DiningHall", backref = "plates") # many plates
+
+#         photo = db.Column(db.String)
+
+#         def serialize(self):
+#             return {
+#                 "id": self.id,
+#                 "menuItemId": self.menuItemId,
+#                 "diningHallId": self.diningHallId,
+#                 "timeCreated": self.timeCreated.isoformat(),
+#                 "photo": self.photo
+#             }
+
 
 
 class Menu(db.Model):
@@ -83,10 +147,9 @@ class Menu(db.Model):
     name = db.Column(db.String, nullable = False) 
 
     description = db.Column(db.String)
-    photo = db.Column(db.String, db.ForeignKey("plate.photo"), nullable=True)
+    # photo = db.Column(db.String, db.ForeignKey("plate.photo"), nullable=True)
     preferenceTags =  db.Column(db.String)
-
-    menu_item = db.relationship("Menu", backref="swipes")
+    menu_items = db.relationship("MenuItem", secondary=menu_menuitem, back_populates="menus")
 
     def serialize(self):
         return {
@@ -94,9 +157,23 @@ class Menu(db.Model):
             "name": self.name,
             "dininghallId": self.dininghallId,
             "description": self.description,
-            "photo": self.photo,
+            # "photo": self.photo,
             "preferenceTags": self.preferenceTags
         }
+
+class MenuItem(db.Model):
+    """
+    Menu item model
+    Many to many relationship with Menu
+    """
+    __tablename__="menuitem"
+    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
+    name = db.Column(db.String, nullable = False) 
+    description = db.Column(db.String)
+    photo = db.Column(db.String)
+
+    swipes = db.relationship("Swipe", back_populates="menu_item")
+    menus = db.relationship("Menu", secondary=menu_menuitem, back_populates="menu_items")
 
 
 class DiningHall(db.Model):
@@ -111,11 +188,15 @@ class DiningHall(db.Model):
     name = db.Column(db.String)
     # location = db.Column(db.String)
 
-    startinghour = db.Column(db.String)
-    endinghour = db.Column(db.String)
+    # startinghour = db.Column(db.String)
+    # endinghour = db.Column(db.String)
+    # latitude = db.Column(db.Float)
+    # longitude = db.Column(db.Float)
+    swipeCount = db.Column(db.Integer, default=0)
 
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
+    menu_items = db.relationship('MenuItem', secondary=menus_table, backref='dininghalls') # class name first, not table name
+    # a menuitem object can access item.dining_halls to get the dining hall objects linked to it
+
     menus = db.relationship("Menu", backref="dining_hall", lazy=True)
 
     def calculate_distance(self, user_latitude, user_longitude):
@@ -128,7 +209,6 @@ class DiningHall(db.Model):
         lat1= radians(self.latitude)
         long1 = radians(self.longitude)
 
-
         lat2 = radians(user_latitude)
         long2 = radians(user_longitude)
 
@@ -139,19 +219,6 @@ class DiningHall(db.Model):
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         return radius_of_earth * c  # Distance in miles
-    
-    def rank_by_proximity(self, user_latitude, user_longitude):
-        """
-        Rank dining halls by distance from user's location
-        """
-        all_dining_halls = DiningHall.query.all()
-        dining_and_distance = []
-        for hall in all_dining_halls:
-            all_dining_halls.append({"dining_hall": hall, "distance": 
-                                     hall.calculate_distance(user_latitude, user_longitude)})
-        ranked = sorted(dining_and_distance, key = lambda x: x["distance"])
-        return ranked
-        
 
     def serialize(self, user_latitude = None, user_longitude = None):
         """
@@ -166,72 +233,19 @@ class DiningHall(db.Model):
             # "location": self.location,
             "latitude":self.latitude,
             "longitude": self.longitude,
-            "startinghour":self.startinghour,
-            "endinghour": self.endinghour,
+            # "startinghour":self.startinghour,
+            # "endinghour": self.endinghour,
             "menu": [menu.serialize() for menu in self.menus],
             "distance": self.calculate_distance(user_latitude, user_longitude)
         }
 
+    
 
-class Preferences(db.Model): 
-    """
-    User preferences model
-    One to one relationship
-    """   
-    __tablename__="preferences"
-    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
-    userId = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
-    # likedSwipes = 
-    # dislikedSwipes = 
-    dietPreferences = db.Column(db.String) #if null, they have no preferences
-        # Vegetarian, Vegan,Halal, Kosher
-    allergens = db.Column(db.String) #if null, they have no allergens
+#  many to many menuitems to menus- dinners
 
-    activity_level = db.Column(db.String) #active, some wlaking, very close
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "userId": self.userId,
-            # "likedSwipes": self.likedSwipes,
-            # "dislikedSwipes": self.dislikedSwipes,
-            "dietPreferences": self.dietPreferences,
-            "allergens": self.allergens,
-            "activity_level": self.activity_level
-            # "name": self.name,
-            # "location": self.location
-        }
-    #Preferences:
-    # Vegetarian, Vegan,Halal, Kosher
-    # "category": "Vegan/Vegetarian Offerings",
-    # "category": "Halal",
-    # "category": "Kosher Station",
-
-    #allergies:
-    #     alcohol, almonds, fish, hazelnuts, milk, pecan nut, pork, shellfish, tree nuts, wheat,
-    #     coconut, egg, gluten, macadamia nuts, peanuts, pistachio, seasame, soy, walnuts,
-        # no allergies
-
-
-
-class Swipe(db.Model):
-    """
-    User swiping model to provide the student a dining hall 
-
-    Many to one relationship, many swipes for one user
-    """
-    __tablename__="swipe"
-    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
-    userId = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
-    menuItemId= db.Column(db.Integer, db.ForeignKey("menu.id"), nullable = False)
-    swipeBoolean = db.Column(db.Boolean, nullable=False) #right:true left:false
-
-    preferencesId = db.Column(db.Integer, db.ForeignKey("preferences.id"), nullable=False)
-    preferences = db.relationship("Preferences", backref="swipes")
 
 
 #list of dining hall: name location hours, menus
-
 # 2025-04-27
 # 2025-04-28
 # 2025-04-29
