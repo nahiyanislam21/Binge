@@ -1,8 +1,12 @@
-version: "3"
-
 services:
   demo:
     image: hydra035/hack #hack
+    volumes:
+      - /Users/bluh/Binge/hackchallenge:/app
+    working_dir: /app
     ports:
       - "8000:8000"
+    # command: python3 /app/add_dining_halls_and_menus.py
+    entrypoint:
+      ["sh", "-c", "ls -la /app && python3 add_dining_halls_and_menus.py"]
     env_file: .env

@@ -1,9 +1,8 @@
  #json file reading
 import json
-import projectdb
 from projectdb import db, DiningHall, MenuItem, menus_table
 
-with open('eateries.json','r') as file:
+with open('/app/eateries.json','r') as file:
     data = json.load(file)
     date = "2025-04-29"
     dining_halls=[]
