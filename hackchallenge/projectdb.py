@@ -19,7 +19,7 @@ from math import radians, sin, cos, sqrt, atan2
 # use a file to populate
 menus_table = db.Table(
     'menus',
-    db.Column('dining_hall',db.Integer, db.ForeignKey("dininghall.id"), primary_key=True), # dininghall
+    db.Column('dining_hall',db.Integer, db.ForeignKey("dininghall.id"), primary_key=True), # c
     db.Column('menu_items', db.Integer, db.ForeignKey("menuitem.id"), primary_key=True)
 )
     
