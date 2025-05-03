@@ -1,7 +1,17 @@
 #db.py
+import os
 from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
+from dotenv import load_dotenv
 
-db = SQLAlchemy()
+load_dotenv()
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///instance/project.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable to avoid warnings
+db = SQLAlchemy(app)
+
+# db = SQLAlchemy()
 
 import json
 from datetime import datetime
@@ -145,10 +155,10 @@ class Menu(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement = True)
     dininghallId= db.Column(db.Integer, db.ForeignKey("dininghall.id"), nullable = False)
     name = db.Column(db.String, nullable = False) 
-
     description = db.Column(db.String)
+    
     # photo = db.Column(db.String, db.ForeignKey("plate.photo"), nullable=True)
-    preferenceTags =  db.Column(db.String)
+    # preferenceTags =  db.Column(db.String)
     menu_items = db.relationship("MenuItem", secondary=menu_menuitem, back_populates="menus")
 
     def serialize(self):
@@ -158,7 +168,7 @@ class Menu(db.Model):
             "dininghallId": self.dininghallId,
             "description": self.description,
             # "photo": self.photo,
-            "preferenceTags": self.preferenceTags
+            # "preferenceTags": self.preferenceTags
         }
 
 class MenuItem(db.Model):
@@ -175,6 +185,15 @@ class MenuItem(db.Model):
     swipes = db.relationship("Swipe", back_populates="menu_item")
     menus = db.relationship("Menu", secondary=menu_menuitem, back_populates="menu_items")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "photo": self.photo,
+            "menuIds": [menu.id for menu in self.menus]
+        }
+
 
 class DiningHall(db.Model):
     """
@@ -184,7 +203,6 @@ class DiningHall(db.Model):
 
     __tablename__="dininghall"
     id = db.Column(db.Integer, primary_key=True, autoincrement = True)
-
     name = db.Column(db.String)
     # location = db.Column(db.String)
 
@@ -231,12 +249,12 @@ class DiningHall(db.Model):
             "id": self.id,
             "name": self.name,
             # "location": self.location,
-            "latitude":self.latitude,
-            "longitude": self.longitude,
+            # "latitude":self.latitude,
+            # "longitude": self.longitude,
             # "startinghour":self.startinghour,
             # "endinghour": self.endinghour,
             "menu": [menu.serialize() for menu in self.menus],
-            "distance": self.calculate_distance(user_latitude, user_longitude)
+            # "distance": self.calculate_distance(user_latitude, user_longitude)
         }
 
     
