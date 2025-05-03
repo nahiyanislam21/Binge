@@ -140,16 +140,16 @@ def swipe():
     db.session.commit()
     return jsonify(swipe.serialize()), 201
 
-@app.route('/api/userSwipeTable/<int:user_id>', methods=['GET'])
-def get_user_swipe_table(user_id):
+@app.route('/api/userSwipe/<int:user_id>', methods=['GET'])
+def get_user_swipe(user_id):
     """
-    Get the swipe table for a user
+    Get the swipe for a user
     """
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
     
-    swipes = UserSwipeTable.query.filter_by(userId=user_id).all()
+    swipes = Swipe.query.filter_by(userId=user_id).all()
     
     return jsonify([swipe.serialize() for swipe in swipes]), 200
 
@@ -196,18 +196,15 @@ def delete_dining_hall_swipes():
     db.session.commit()
     return jsonify({"message": "All swipes deleted"}), 200
 
+
 @app.route('/api/menu', methods=['POST'])
-def add_menu(): #
+def add_menu():
     """
     Add a menu to the database
     """
     data = request.get_json()
     name = data.get('name')
     dining_hall_id = data.get('diningHallId')
-    menu_item_ids = data.get('menuItemIds')
-
-    if not isinstance(menu_item_ids, list) or not all(isinstance(id, int) for id in menu_item_ids):
-        return jsonify({"error": "menuItemIds must be a list of integers"}), 400
 
     if not all([name, dining_hall_id]):
         return jsonify({"error": "Missing required fields"}), 400
@@ -218,15 +215,10 @@ def add_menu(): #
 
     menu = Menu(name=name, dining_hall=dining_hall)
 
-    for item_id in menu_item_ids:
-        item = MenuItem.query.get(item_id)
-        if item:
-            menu.menu_items.append(item)
-        else:
-            return jsonify({"error": f"MenuItem with id {item_id} not found"}), 404
     db.session.add(menu)
     db.session.commit()
     return jsonify(menu.serialize()), 201
+
 
 @app.route('/api/menuitems', methods=['POST'])
 def add_menu_items(): #works
@@ -363,6 +355,21 @@ def match_dining_hall(user_id):
 #     return jsonify(plate.serialize()),201
 
 
+# @app.route('/api/clear_database', methods=['POST'])
+# def clear_database():
+#     try:
+#         # Delete in reverse order of dependencies
+#         Swipe.query.delete()
+#         MenuItem.query.delete()
+#         DiningHall.query.delete()
+#         User.query.delete()
+        
+#         db.session.commit()
+#         return jsonify({'message': 'All data deleted'}), 200
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'error': str(e)}), 500
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
 
