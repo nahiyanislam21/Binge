@@ -229,7 +229,7 @@ def add_menu():
     return jsonify(menu.serialize()), 201
 
 @app.route('/api/menuitems', methods=['POST'])
-def add_menu_items(): #kinda works, need more testing
+def add_menu_items(): #works
     """
     Add menu items to the database
     """
@@ -271,8 +271,6 @@ def get_specific_menu_item(item_id): #works
     if not item:
         return jsonify({"error": "Menu item not found"}), 404
     return jsonify(item.serialize()), 200
-
-
 
 
 # @app.route('/api/match/<int:user_id>', methods=['GET'])
