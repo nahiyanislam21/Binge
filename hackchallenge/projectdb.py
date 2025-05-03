@@ -1,7 +1,17 @@
 #db.py
+import os
 from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
+from dotenv import load_dotenv
 
-db = SQLAlchemy()
+load_dotenv()
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///instance/project.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable to avoid warnings
+db = SQLAlchemy(app)
+
+# db = SQLAlchemy()
 
 import json
 from datetime import datetime
