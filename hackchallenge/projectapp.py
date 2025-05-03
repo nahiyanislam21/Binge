@@ -81,7 +81,7 @@ def get_dining_halls(): #✅
     return jsonify(dining_halls), 200
 
 @app.route('/api/users/<int:user_id>', methods=['DELETE']) # new method C R U D-Delete
-def delete_user_account(user_id): 
+def delete_user_account(user_id):  #✅
     """
     Delete a user account
     """
@@ -90,7 +90,7 @@ def delete_user_account(user_id):
         return jsonify({"error": "User not found"}), 404
     db.session.delete(user)
     db.session.commit()
-    return jsonify(user), 200
+    return jsonify(user.serialize()), 200
 
 @app.route('/api/rank_by_distance', methods=['GET'])
 def rank_by_distance(): #✅
@@ -155,7 +155,7 @@ def get_user_swipe_table(user_id):
 
 
 @app.route('/api/dining/menu/<string:name>', methods = ['GET'])
-def get_dining_hall_menu(name):
+def get_dining_hall_menu(name): 
     """
     Get the menu for a dining hall
     """
@@ -224,14 +224,12 @@ def add_menu():
             menu.menu_items.append(item)
         else:
             return jsonify({"error": f"MenuItem with id {item_id} not found"}), 404
-
-
     db.session.add(menu)
     db.session.commit()
     return jsonify(menu.serialize()), 201
 
 @app.route('/api/menuitems', methods=['POST'])
-def add_menu_items():
+def add_menu_items(): #kinda works, need more testing
     """
     Add menu items to the database
     """
@@ -240,7 +238,6 @@ def add_menu_items():
     description = data.get('description')
     photo = data.get('photo')
     menu_ids = data.get('menuIds')  # list of menu IDs
-
 
     if not all([name, description, photo]) or not isinstance(menu_ids, list) or not menu_ids:
         return jsonify({"error": "Missing or invalid required fields"}), 400
@@ -258,34 +255,62 @@ def add_menu_items():
     return jsonify(menu_item.serialize()), 201
 
 @app.route('/api/menuitems', methods=['GET'])
-def get_menu_items():
+def get_menu_items(): #works obviously
+    '''
+    Get all menu items in database
+    '''
     menu_items = MenuItem.query.all()
     return jsonify([item.serialize() for item in menu_items]), 200
 
 @app.route('/api/menuitems/<int:item_id>', methods=['GET'])
-def get_menu_item(item_id):
+def get_specific_menu_item(item_id): #works
+    '''
+    Get specific menu item by item id
+    '''
     item = MenuItem.query.get(item_id)
     if not item:
         return jsonify({"error": "Menu item not found"}), 404
     return jsonify(item.serialize()), 200
 
-@app.route('/api/match/<int:user_id>', methods=['GET'])
-def match_dining_hall(user_id):
-    """
-    Get the dining hall that matches the user's swipes
-    """
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
+
+
+
+# @app.route('/api/match/<int:user_id>', methods=['GET'])
+# def match_dining_hall(user_id):
+#     """
+#     Get the dining hall that matches the user's swipes
+#     """
+#     user = User.query.get(user_id)
+#     if not user:
+#         return jsonify({"error": "User not found"}), 404
     
-    dining_halls = DiningHall.query.all()
-    if not dining_halls:
-        return jsonify({"error": "No dining halls found"}), 404
+#     dining_halls = DiningHall.query.all()
+#     if not dining_halls:
+#         return jsonify({"error": "No dining halls found"}), 404
 
-    max_swipe = max(hall.swipeCount for hall in dining_halls)
-    matched_halls = [hall.serialize() for hall in dining_halls if hall.swipeCount == max_swipe]
+#     max_swipe = max(hall.swipeCount for hall in dining_halls)
+#     matched_halls = [hall.serialize() for hall in dining_halls if hall.swipeCount == max_swipe]
 
-    return jsonify({"dining_hall": matched_halls}), 200
+#     return jsonify({"dining_hall": matched_halls}), 200
+
+
+
+@app.route('/api/dininghalls', methods=['POST'])
+def create_dining_hall(): #works
+    """
+    Create a dining hall
+    """
+    data = request.get_json()
+    name = data.get('name')
+
+    if name is None:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    hall = DiningHall(name=name)
+    db.session.add(hall)
+    db.session.commit()
+    return jsonify(hall.serialize()), 201
+
 
 #TRYING TO IMPLEMENT USING THE TABLE
 @app.route('/api/match/<int:user_id>', methods=['GET'])
@@ -296,7 +321,7 @@ def match_dining_hall(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
-    user = User.query.get(user_id)
+
     swipes = user.user_swipe_table_entries
     if not swipes:
         return jsonify({"error": "No swipes found for this user"}), 404
@@ -307,13 +332,12 @@ def match_dining_hall(user_id):
         if swipe.swipeBoolean:
             menu_item = swipe.menu_item
             for dining_hall in menu_item.dining_halls:
-                dining_hall.swipeCount += 1    
+                # dining_hall.swipeCount += 1    
                 dininghall_counts[dining_hall.id] += 1
-    max_count = max(dininghall_counts.values())
+    # max_count = max(dininghall_counts.values())
     matched_hall_id = max(dininghall_counts, key=lambda k: (dininghall_counts[k], -k)) # For now, this just takes the lowest id if multiple have same swipe count
     matched_hall = DiningHall.query.get(matched_hall_id)
     return jsonify({"dining_hall": matched_hall}), 200
-
 
 
 
