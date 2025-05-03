@@ -2,7 +2,7 @@
 
 import json
 import os
-from projectdb import db, DiningHall, User, Swipe, MenuItem, UserSwipeTable, Menu
+from projectdb import db, DiningHall, User, Swipe, MenuItem, Menu
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -186,7 +186,7 @@ def get_item_dining_halls(name):
     }), 200
 
 @app.route('/api/dininghalls', methods=['DELETE'])
-def delete_dining_hall_swipes():
+def delete_dining_hall_swipes(): 
     """
     Delete all swipes for all dining hall
     """
