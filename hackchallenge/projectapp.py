@@ -2,7 +2,7 @@
 
 import json
 import os
-from projectdb import db, DiningHall, User, Swipe, MenuItem, UserSwipeTable, Menu
+from projectdb import db, DiningHall, User, Swipe, MenuItem, Menu
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -80,33 +80,33 @@ def get_dining_halls(): #✅
         dining_halls.append(dining_hall.serialize())
     return jsonify(dining_halls), 200
 
-@app.route('/api/users/<int:user_id>', methods=['DELETE']) # new method C R U D-Delete
-def delete_user_account(user_id):  #✅
-    """
-    Delete a user account
-    """
-    user = User.query.get(user_id)
-    if user is None:
-        return jsonify({"error": "User not found"}), 404
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify(user.serialize()), 200
+# @app.route('/api/users/<int:user_id>', methods=['DELETE']) # new method C R U D-Delete
+# def delete_user_account(user_id):  #✅
+#     """
+#     Delete a user account
+#     """
+#     user = User.query.get(user_id)
+#     if user is None:
+#         return jsonify({"error": "User not found"}), 404
+#     db.session.delete(user)
+#     db.session.commit()
+#     return jsonify(user.serialize()), 200
 
-@app.route('/api/rank_by_distance', methods=['GET'])
-def rank_by_distance(): #✅
-    """
-    Rank dining halls by distance from user
-    """
-    user_latitude = request.args.get('latitude', type=float)
-    user_longitude = request.args.get('longitude', type=float)
-    all_dining_halls = DiningHall.query.all()
-    dining_and_distance = []
-    for hall in all_dining_halls:
-        dining_and_distance.append({
-            "dining_hall": hall.serialize(user_latitude, user_longitude),
-            "distance": hall.calculate_distance(user_latitude, user_longitude)
-        })
-    return jsonify(dining_and_distance), 200
+# @app.route('/api/rank_by_distance', methods=['GET'])
+# def rank_by_distance(): #✅
+#     """
+#     Rank dining halls by distance from user
+#     """
+#     user_latitude = request.args.get('latitude', type=float)
+#     user_longitude = request.args.get('longitude', type=float)
+#     all_dining_halls = DiningHall.query.all()
+#     dining_and_distance = []
+#     for hall in all_dining_halls:
+#         dining_and_distance.append({
+#             "dining_hall": hall.serialize(user_latitude, user_longitude),
+#             "distance": hall.calculate_distance(user_latitude, user_longitude)
+#         })
+#     return jsonify(dining_and_distance), 200
 
 @app.route('/api/swipe', methods=['POST'])
 def swipe():
@@ -140,16 +140,16 @@ def swipe():
     db.session.commit()
     return jsonify(swipe.serialize()), 201
 
-@app.route('/api/userSwipeTable/<int:user_id>', methods=['GET'])
-def get_user_swipe_table(user_id):
+@app.route('/api/userSwipe/<int:user_id>', methods=['GET'])
+def get_user_swipe(user_id):
     """
-    Get the swipe table for a user
+    Get the swipe for a user
     """
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
     
-    swipes = UserSwipeTable.query.filter_by(userId=user_id).all()
+    swipes = Swipe.query.filter_by(userId=user_id).all()
     
     return jsonify([swipe.serialize() for swipe in swipes]), 200
 
@@ -186,7 +186,7 @@ def get_item_dining_halls(name):
     }), 200
 
 @app.route('/api/dininghalls', methods=['DELETE'])
-def delete_dining_hall_swipes():
+def delete_dining_hall_swipes(): 
     """
     Delete all swipes for all dining hall
     """
@@ -196,6 +196,7 @@ def delete_dining_hall_swipes():
     db.session.commit()
     return jsonify({"message": "All swipes deleted"}), 200
 
+
 @app.route('/api/menu', methods=['POST'])
 def add_menu():
     """
@@ -204,10 +205,6 @@ def add_menu():
     data = request.get_json()
     name = data.get('name')
     dining_hall_id = data.get('diningHallId')
-    menu_item_ids = data.get('menuItemIds')
-
-    if not isinstance(menu_item_ids, list) or not all(isinstance(id, int) for id in menu_item_ids):
-        return jsonify({"error": "menuItemIds must be a list of integers"}), 400
 
     if not all([name, dining_hall_id]):
         return jsonify({"error": "Missing required fields"}), 400
@@ -218,15 +215,10 @@ def add_menu():
 
     menu = Menu(name=name, dining_hall=dining_hall)
 
-    for item_id in menu_item_ids:
-        item = MenuItem.query.get(item_id)
-        if item:
-            menu.menu_items.append(item)
-        else:
-            return jsonify({"error": f"MenuItem with id {item_id} not found"}), 404
     db.session.add(menu)
     db.session.commit()
     return jsonify(menu.serialize()), 201
+
 
 @app.route('/api/menuitems', methods=['POST'])
 def add_menu_items(): #works
@@ -363,6 +355,21 @@ def match_dining_hall(user_id):
 #     return jsonify(plate.serialize()),201
 
 
+# @app.route('/api/clear_database', methods=['POST'])
+# def clear_database():
+#     try:
+#         # Delete in reverse order of dependencies
+#         Swipe.query.delete()
+#         MenuItem.query.delete()
+#         DiningHall.query.delete()
+#         User.query.delete()
+        
+#         db.session.commit()
+#         return jsonify({'message': 'All data deleted'}), 200
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'error': str(e)}), 500
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
 
