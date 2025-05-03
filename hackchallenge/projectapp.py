@@ -288,7 +288,7 @@ def match_dining_hall(user_id):
     return jsonify({"dining_hall": matched_halls}), 200
 
 #TRYING TO IMPLEMENT USING THE TABLE
-@app.route('/api/match/<int:user_id>', methods=['GET'])
+@app.route('/api/match2/<int:user_id>', methods=['GET'])
 def match_dining_hall(user_id):
     """
     Get the dining hall that matches the user's swipes
@@ -309,7 +309,6 @@ def match_dining_hall(user_id):
             for dining_hall in menu_item.dining_halls:
                 dining_hall.swipeCount += 1    
                 dininghall_counts[dining_hall.id] += 1
-    max_count = max(dininghall_counts.values())
     matched_hall_id = max(dininghall_counts, key=lambda k: (dininghall_counts[k], -k)) # For now, this just takes the lowest id if multiple have same swipe count
     matched_hall = DiningHall.query.get(matched_hall_id)
     return jsonify({"dining_hall": matched_hall}), 200
