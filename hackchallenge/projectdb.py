@@ -64,30 +64,30 @@ class User(db.Model):
             "email": self.email
         }
     
-class UserSwipeTable(db.Model):
-    """
-    User swipe table model
-    Many to many relationship with user and dining hall
-    """
-    __tablename__="user_swipe_table"
-    id = db.Column(db.Integer, primary_key=True, autoincrement = True) 
-    userId = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
+# class UserSwipeTable(db.Model):
+#     """
+#     User swipe table model
+#     Many to many relationship with user and dining hall
+#     """
+#     __tablename__="user_swipe_table"
+#     id = db.Column(db.Integer, primary_key=True, autoincrement = True) 
+#     userId = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
     
-    SwipeNumber = db.Column(db.Integer, nullable = False)
-    menuItemId = db.Column(db.Integer, db.ForeignKey("menuitem.id"), nullable=False)
-    swipeStatus = db.Column(db.Boolean, nullable = False) #right:true left:false
+#     SwipeNumber = db.Column(db.Integer, nullable = False)
+#     menuItemId = db.Column(db.Integer, db.ForeignKey("menuitem.id"), nullable=False)
+#     swipeStatus = db.Column(db.Boolean, nullable = False) #right:true left:false
 
-    user = db.relationship("User", backref="user_swipe_table_entries")
-    menu_item = db.relationship("MenuItem", backref="user_swipes")
+#     user = db.relationship("User", backref="user_swipe_table_entries")
+#     menu_item = db.relationship("MenuItem", backref="user_swipes")
 
-    def serialize(self):
-        return {
-            "id": self.id,
-            "userId": self.userId,
-            "SwipeNumber": self.SwipeNumber,
-            "menuItemId": self.menuItemId,
-            "swipeStatus": self.swipeStatus
-        }
+#     def serialize(self):
+#         return {
+#             "id": self.id,
+#             "userId": self.userId,
+#             "SwipeNumber": self.SwipeNumber,
+#             "menuItemId": self.menuItemId,
+#             "swipeStatus": self.swipeStatus
+#         }
     
 class Swipe(db.Model): 
     """

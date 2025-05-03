@@ -80,33 +80,33 @@ def get_dining_halls(): #✅
         dining_halls.append(dining_hall.serialize())
     return jsonify(dining_halls), 200
 
-@app.route('/api/users/<int:user_id>', methods=['DELETE']) # new method C R U D-Delete
-def delete_user_account(user_id):  #✅
-    """
-    Delete a user account
-    """
-    user = User.query.get(user_id)
-    if user is None:
-        return jsonify({"error": "User not found"}), 404
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify(user.serialize()), 200
+# @app.route('/api/users/<int:user_id>', methods=['DELETE']) # new method C R U D-Delete
+# def delete_user_account(user_id):  #✅
+#     """
+#     Delete a user account
+#     """
+#     user = User.query.get(user_id)
+#     if user is None:
+#         return jsonify({"error": "User not found"}), 404
+#     db.session.delete(user)
+#     db.session.commit()
+#     return jsonify(user.serialize()), 200
 
-@app.route('/api/rank_by_distance', methods=['GET'])
-def rank_by_distance(): #✅
-    """
-    Rank dining halls by distance from user
-    """
-    user_latitude = request.args.get('latitude', type=float)
-    user_longitude = request.args.get('longitude', type=float)
-    all_dining_halls = DiningHall.query.all()
-    dining_and_distance = []
-    for hall in all_dining_halls:
-        dining_and_distance.append({
-            "dining_hall": hall.serialize(user_latitude, user_longitude),
-            "distance": hall.calculate_distance(user_latitude, user_longitude)
-        })
-    return jsonify(dining_and_distance), 200
+# @app.route('/api/rank_by_distance', methods=['GET'])
+# def rank_by_distance(): #✅
+#     """
+#     Rank dining halls by distance from user
+#     """
+#     user_latitude = request.args.get('latitude', type=float)
+#     user_longitude = request.args.get('longitude', type=float)
+#     all_dining_halls = DiningHall.query.all()
+#     dining_and_distance = []
+#     for hall in all_dining_halls:
+#         dining_and_distance.append({
+#             "dining_hall": hall.serialize(user_latitude, user_longitude),
+#             "distance": hall.calculate_distance(user_latitude, user_longitude)
+#         })
+#     return jsonify(dining_and_distance), 200
 
 @app.route('/api/swipe', methods=['POST'])
 def swipe():
@@ -197,7 +197,7 @@ def delete_dining_hall_swipes():
     return jsonify({"message": "All swipes deleted"}), 200
 
 @app.route('/api/menu', methods=['POST'])
-def add_menu():
+def add_menu(): #
     """
     Add a menu to the database
     """
